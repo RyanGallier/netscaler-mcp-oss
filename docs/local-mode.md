@@ -22,11 +22,13 @@ The credentials you configure are the role. A tool whose account is not configur
 The built-in `read-only` policy is not enough: it denies `show system ...`, the running and saved config and audit messages, so about ten read tools would fail. Bind this policy instead. It is the built-in read-only shape plus exactly what the read tools need: the system user, group, policy, session and parameter reads for `audit_admin_access`, reading `/var/log/ns.log`, and the exact `ping` and `traceroute` commands `test_reachability` sends:
 
 ```
-add system cmdPolicy mcp_read_policy ALLOW "(^man.*)|(^show (?!system)(?!configstatus)(?!ns ns\.conf)(?!gslb runningConfig)(?!techsupport)(?!ns rpcNode).*)|(^stat.*)|(^show system (user|group|cmdPolicy|session|global|parameter)( .*)?$)|(^show system file ns\.log -fileLocation \x22?/var/log\x22?$)|(^ping -c 3(( -S [0-9a-fA-F.:]+)|( -T [0-9]{1,4})){0,2} -t 5 [A-Za-z0-9:][A-Za-z0-9.:-]*$)|(^traceroute -m [1-6] -q 1(( -s [0-9a-fA-F.:]+)|( -T [0-9]{1,4})){0,2} -w 2 [A-Za-z0-9:][A-Za-z0-9.:-]*$)"
+add system cmdPolicy mcp_read_policy ALLOW "(^man.*)|(^show (?!system)(?!configstatus)(?!ns ns\.conf)(?!gslb runningConfig)(?!techsupport)(?!ns rpcNode).*)|(^stat.*)|(^show system (user|group|cmdPolicy|session|global|parameter)( .*)?$)|(^show system file ns\.log -fileLocation \x22?/var/log\x22?$)|(^ping -c 3(( -S [0-9a-fA-F.:]+)|( -T [0-9]{1,4})){0,2} -t 5 [A-Za-z0-9:][A-Za-z0-9.:-]*$)|(^traceroute -n -m [1-6] -q 1(( -s [0-9a-fA-F.:]+)|( -T [0-9]{1,4})){0,2} -w 2 [A-Za-z0-9:][A-Za-z0-9.:-]*$)"
 add system user mcp_read <password> -externalAuth DISABLED -allowedManagementInterface API -timeout 900
 bind system user mcp_read mcp_read_policy 100
 save ns config
 ```
+
+To update an existing `mcp_read_policy` in place, run `set system cmdPolicy mcp_read_policy ALLOW "<the regex above>"`; the binding stays.
 
 What this account cannot do, checked on 13.1-64.28: any write, reading or downloading any other file (`/nsconfig`, `/nsconfig/ssl`, trace files, TLS key files, core files, other logs), and `ping` or `traceroute` with other options, a larger count or an extra command. Core files are listed and read only by the forensic tools, over SSH.
 

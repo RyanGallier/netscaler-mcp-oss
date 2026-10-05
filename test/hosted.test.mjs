@@ -51,6 +51,10 @@ before(async () => {
     res.setHeader("Content-Type", "application/json");
     if (body?.servicegroup?.servicegroupname === "hang") return; // never answers: the client times out
     if (req.url.includes("/config/hangget")) return;
+    if (/[?&]filter=[^&]*%3A/i.test(req.url)) { // NITRO 13.1 and 14.1 reject an encoded ':' in filter
+      res.statusCode = 400;
+      return res.end(JSON.stringify({ errorcode: -1, message: "Invalid filter in query parameters", severity: "ERROR" }));
+    }
     if (req.url.includes("responderpolicy/nope") || req.url.includes("vpnvserver_responderpolicy_binding/gw3")) {
       res.statusCode = 500;
       return res.end(JSON.stringify({ errorcode: 258, message: "No such resource", severity: "ERROR" }));
@@ -259,18 +263,29 @@ const call = async (name, args, roles = ["NetScaler.Admin"]) =>
   (await rpc("tools/call", { name, arguments: { appliance: "lab", ...args } }, roles)).body;
 const posts = () => nitroCalls.filter((c) => c.method === "POST");
 
-test("test_reachability sends a capped ping and rejects option-shaped hosts", async () => {
+test("test_reachability sends a capped ping, a numeric traceroute, and rejects option-shaped hosts", async () => {
   const n = posts().length;
   const ok = await call("test_reachability", { mode: "ping", host: "10.1.1.1", source_ip: "10.0.0.9" }, ["NetScaler.Reader"]);
   assert.match(ok.result.content[0].text, /3 packets transmitted/);
   const sent = posts().at(-1);
   assert.match(sent.url, /\/config\/ping$/);
   assert.deepEqual(sent.body, { ping: { hostName: "10.1.1.1", c: 3, t: 5, S: "10.0.0.9" } });
+  await call("test_reachability", { mode: "traceroute", host: "10.1.1.1", max_hops: 3 }, ["NetScaler.Reader"]);
+  assert.deepEqual(posts().at(-1).body, { traceroute: { host: "10.1.1.1", n: true, m: 3, w: 2, q: 1 } });
   for (const host of ["-c 99 10.1.1.1", "a b", "host\r\nx", "h\u00e9st.example", "-flood"]) {
     const r = await call("test_reachability", { mode: "ping", host }, ["NetScaler.Reader"]);
     assert.ok(r.error || r.result?.isError, host);
   }
-  assert.equal(posts().length, n + 1);
+  assert.equal(posts().length, n + 2);
+});
+
+test("filters reach NITRO with a literal ':' and a failed read is not reported as all UP", async () => {
+  const r = await call("list_down_services", {}, ["NetScaler.Reader"]);
+  assert.ok(!r.result.isError, r.result.content[0].text);
+  assert.ok(nitroCalls.some((c) => c.url.includes("/config/service?filter=svrstate:DOWN&attrs=name,ipaddress")));
+  const s = await call("list_services", { state_filter: "OUT OF SERVICE" }, ["NetScaler.Reader"]);
+  assert.ok(!s.result.isError, s.result.content[0].text);
+  assert.ok(nitroCalls.some((c) => c.url.includes("filter=svrstate:OUT%20OF%20SERVICE")));
 });
 
 test("drain_service_group_member sends member-only payloads and reports observed state", async () => {

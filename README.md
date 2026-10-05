@@ -7,7 +7,7 @@ An MCP (Model Context Protocol) server that lets Claude and other MCP clients tr
 - **HA-aware.** Point it at both nodes: HA and crash checks query both, failover finds the current primary, and log and SSH tools take a `node` argument.
 - **Two ways to run it:** locally over stdio for one operator, on Linux, Windows or macOS with Node.js 20+, or hosted over HTTP for a team on Azure App Service, with Entra ID sign-in, per-user roles and an audit log of every write.
 
-Tested against NetScaler 13.1 builds 62.23, 64.24 and 64.28. Other 13.1 builds should work. 14.1 has not been tested.
+Tested against NetScaler 13.1 builds 62.23, 64.24 and 64.28, and 14.1 build 73.41 on a standalone appliance. Other 13.1 and 14.1 builds should work. On 14.1, the HA tools (`force_ha_failover`, `force_ha_sync`, peer-node reads) have not been tested.
 
 ## Which mode?
 

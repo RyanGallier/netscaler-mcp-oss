@@ -6,7 +6,7 @@
  * Exposes Citrix NetScaler NITRO REST API operations as MCP tools
  * for operational management and troubleshooting of NetScaler HA pairs.
  *
- * Tested against firmware 13.1 builds 62.23, 64.24 and 64.28.
+ * Tested against firmware 13.1 builds 62.23, 64.24 and 64.28, and 14.1-73.41 (standalone).
  *
  * Default: stdio, one appliance from NETSCALER_* env vars, or several from
  * NETSCALER_TARGETS, chosen per call. The accounts configured decide the tools:

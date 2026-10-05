@@ -117,7 +117,7 @@ export function registerNetworkTools(server: McpServer, client: NitroClient) {
 
   server.tool(
     "test_reachability",
-    "Ping or traceroute FROM the NetScaler, optionally from a chosen source IP (e.g. a SNIP) and traffic domain. Answers 'can the appliance reach this backend, LDAP server or STA'. Fixed small probes: ping sends 3 packets and gives up after 5 s; traceroute stops at 6 hops (max), 1 probe per hop, 2 s wait (the NITRO minimum). Needs ping/traceroute allowed by the NITRO user's command policy (the built-in read-only policy does not). Output shape is unverified on builds other than the one tested.",
+    "Ping or traceroute FROM the NetScaler, optionally from a chosen source IP (e.g. a SNIP) and traffic domain. Answers 'can the appliance reach this backend, LDAP server or STA'. Fixed small probes: ping sends 3 packets and gives up after 5 s; traceroute stops at 6 hops (max), 1 probe per hop, 2 s wait (the NITRO minimum), numeric output (no reverse DNS, which can stall past the timeout when a nameserver is down). Needs ping/traceroute allowed by the NITRO user's command policy (the built-in read-only policy does not). Output shape is unverified on builds other than the one tested.",
     {
       mode: z.enum(["ping", "traceroute"]).describe("ping for reachability and latency, traceroute for the path."),
       host: z.string().refine((v) => isIP(v) === 4 || (isIP(v) === 0 && FQDN.test(v)), "must be an IPv4 address or an ASCII hostname (IPv6 is not supported)").describe("Target IPv4 address or hostname."),
@@ -132,7 +132,7 @@ export function registerNetworkTools(server: McpServer, client: NitroClient) {
       const resource = args.mode as string;
       const body = resource === "ping"
         ? { hostName: host, c: 3, t: 5, ...(src && { S: src }), ...(td !== undefined && { T: td }) }
-        : { host, m: args.max_hops, w: 2, q: 1, ...(src && { s: src }), ...(td !== undefined && { T: td }) };
+        : { host, n: true, m: args.max_hops, w: 2, q: 1, ...(src && { s: src }), ...(td !== undefined && { T: td }) };
       let resp: Record<string, unknown>;
       try {
         resp = await client.post(resource, { [resource]: body });

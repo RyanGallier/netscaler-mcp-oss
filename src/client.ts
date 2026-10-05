@@ -118,8 +118,9 @@ export class NitroClient {
     if (rawQueryString) {
       url += `?${rawQueryString}`;
     } else if (params) {
-      const qs = new URLSearchParams(params).toString();
-      url += `?${qs}`;
+      // NITRO rejects an encoded ':' in filter ("Invalid filter in query parameters"), so ':' and ',' stay literal.
+      const enc = (v: string) => encodeURIComponent(v).replace(/%3A/gi, ":").replace(/%2C/gi, ",");
+      url += `?${Object.entries(params).map(([k, v]) => `${enc(k)}=${enc(v)}`).join("&")}`;
     }
     return this.request("GET", url);
   }

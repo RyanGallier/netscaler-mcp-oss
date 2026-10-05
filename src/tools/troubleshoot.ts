@@ -404,25 +404,12 @@ export function registerTroubleshootTools(server: McpServer, client: NitroClient
     "Quick diagnostic: list all services that are DOWN or OUT OF SERVICE, with IP, port, service type and last state change. Service group members are not included; use get_service_group_members or trace_vserver_health for those.",
     {},
     async () => {
-      // Get all services that are DOWN
-      let downServices: Record<string, unknown>[] = [];
-      try {
-        const resp = await client.get("config", "service", {
-          filter: "svrstate:DOWN",
-          attrs: "name,ipaddress,port,svrstate,servicetype,statechangetimesec",
-        });
-        downServices = (resp.service as Record<string, unknown>[]) ?? [];
-      } catch { /* no down services */ }
-
-      // Also check for OUT OF SERVICE
-      let oosServices: Record<string, unknown>[] = [];
-      try {
-        const resp = await client.get("config", "service", {
-          filter: "svrstate:OUT OF SERVICE",
-          attrs: "name,ipaddress,port,svrstate,servicetype,statechangetimesec",
-        });
-        oosServices = (resp.service as Record<string, unknown>[]) ?? [];
-      } catch { /* none */ }
+      // Read errors propagate: an empty result must mean no services are down, never a failed query.
+      const attrs = "name,ipaddress,port,svrstate,servicetype,statechangetimesec";
+      const down = await client.get("config", "service", { filter: "svrstate:DOWN", attrs });
+      const downServices = (down.service as Record<string, unknown>[]) ?? [];
+      const oos = await client.get("config", "service", { filter: "svrstate:OUT OF SERVICE", attrs });
+      const oosServices = (oos.service as Record<string, unknown>[]) ?? [];
 
       const allDown = [...downServices, ...oosServices];
 
