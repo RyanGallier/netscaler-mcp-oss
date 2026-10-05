@@ -92,6 +92,9 @@ before(async () => {
       sslvserver: [{ vservername: "vs_old", ssl3: "DISABLED", tls1: "ENABLED", tls11: "DISABLED", tls12: "ENABLED", tls13: "DISABLED" }, { vservername: "vs_broken", tls12: "ENABLED" }],
       sslvserver_binding: req.url.includes("sslvserver_binding/vs_broken") ? undefined : [{ sslvserver_sslciphersuite_binding: [{ ciphername: "SSL3-DES-CBC3-SHA" }, { ciphername: "DEFAULT" }], sslvserver_sslcertkey_binding: [{ certkeyname: "www" }] }],
       sslcertkey: [{ certkey: "www", daystoexpiration: 12, linkcertkeyname: "", issuer: "CN=Some CA", subject: "CN=www" }],
+      authenticationvserver_authenticationpolicy_binding: req.url.includes("authenticationvserver_authenticationpolicy_binding/aaa1") ? [{ policy: "ap_saml", priority: "100" }] : undefined,
+      authenticationpolicy: req.url.includes("authenticationpolicy/ap_saml") ? [{ name: "ap_saml", rule: "true", action: "saml1" }] : undefined,
+      authenticationsamlaction: req.url.includes("authenticationsamlaction/saml1") ? [{ name: "saml1", samlredirecturl: "https://idp.example/sso" }] : undefined,
       authenticationldapaction: [{ name: "l1", ldapbinddnpassword: "s3cret-bind", passwdchange: "ENABLED", _nextgenapiresource: "x" }],
       systemuser: [{ username: "backdoor", externalauth: "DISABLED", logging: "ENABLED" }],
       systemcmdpolicy: [{ policyname: "allow_all", action: "ALLOW", cmdspec: ".*" }],
@@ -429,10 +432,11 @@ test("node=peer with no peer configured is an error; a standalone appliance is n
   }
 });
 
-test("diagnose_auth follows a Gateway's authentication profile, and keeps what it has when the profile is missing", async () => {
+test("diagnose_auth follows a Gateway's authentication profile, resolves advanced policy actions of any type, and keeps what it has when the profile is missing", async () => {
   const ok = JSON.parse((await rpc("tools/call", { name: "diagnose_auth", arguments: { appliance: "lab", vserver_name: "gw1" } })).body.result.content[0].text);
   assert.equal(ok.nfactor_auth_vserver.authnprofile, "prof1");
   assert.equal(ok.nfactor_auth_vserver.vserver[0].name, "aaa1");
+  assert.deepEqual(ok.nfactor_auth_vserver.action_configs.saml1, { type: "authenticationsamlaction", config: [{ name: "saml1", samlredirecturl: "https://idp.example/sso" }] });
   assert.ok(nitroCalls.some((c) => c.url.includes("vpnvserver_authenticationpolicy_binding/gw1")));
   const broken = (await rpc("tools/call", { name: "diagnose_auth", arguments: { appliance: "lab", vserver_name: "gw2" } })).body.result;
   assert.ok(!broken.isError);

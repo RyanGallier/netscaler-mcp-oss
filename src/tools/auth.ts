@@ -25,6 +25,12 @@ const AUTH_RESOURCES = {
 } as const;
 const AUTH_KINDS = Object.keys(AUTH_RESOURCES) as [keyof typeof AUTH_RESOURCES, ...(keyof typeof AUTH_RESOURCES)[]];
 
+/** An advanced authentication policy's action can be any of these types; the policy does not say which. */
+const ADVANCED_ACTION_RESOURCES = [
+  "saml", "ldap", "radius", "oauth", "cert", "negotiate", "noauth", "tacacs",
+  "webauth", "epa", "dfa", "citrixauth", "storefrontauth", "email", "captcha",
+].map((t) => `authentication${t}action`);
+
 /** Binding rows name the policy only; its rule and action live on the advanced authenticationpolicy object. */
 async function policyRuleAction(client: NitroClient, name: string): Promise<{ rule?: unknown; action?: unknown }> {
   try {
@@ -447,6 +453,20 @@ export function registerAuthTools(server: McpServer, client: NitroClient) {
         const data = resp[binding] as Record<string, unknown>[] | undefined;
         if (data && data.length > 0) {
           authConfig[binding] = data;
+
+          // Advanced (nFactor) policies: look the action up under each type until one has it.
+          if (binding.endsWith("_authenticationpolicy_binding")) {
+            for (const row of data) {
+              const actionName = (await policyRuleAction(client, row.policy as string)).action as string | undefined;
+              if (!actionName || actionDetails[actionName]) continue;
+              for (const resource of ADVANCED_ACTION_RESOURCES) {
+                try {
+                  const rows = (await client.get("config", `${resource}/${encodeURIComponent(actionName)}`))[resource] as unknown[] | undefined;
+                  if (rows?.length) { actionDetails[actionName] = { type: resource, config: rows }; break; }
+                } catch { /* not this type */ }
+              }
+            }
+          }
 
           // Binding rows carry only the policy name; the action name is on the policy (reqaction, or action for OAuth IdP).
           if (actionResource) {
