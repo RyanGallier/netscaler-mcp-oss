@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "netscaler": {
+      "command": "node",
+      "args": ["/path/to/netscaler-mcp-oss/dist/index.js"],
+      "env": {
+        "NETSCALER_NSIP": "10.0.0.1",
+        "NETSCALER_USER": "mcp_read",
+        "NETSCALER_PASS": "REPLACE_ME",
+        "NETSCALER_PEER_NSIP": "10.0.0.2",
+        "NETSCALER_SSH_USER": "ns_nsconmsg_ro",
+        "NETSCALER_SSH_PASS": "REPLACE_ME",
+        "NETSCALER_TLS_SHA256": "AA:BB:...:FF,CC:DD:...:EE",
+        "NETSCALER_SSH_SHA256": "SHA256:...,SHA256:...",
+        "NETSCALER_ADMIN_USER": "",
+        "NETSCALER_ADMIN_PASS": ""
+      }
+    }
+  }
+}

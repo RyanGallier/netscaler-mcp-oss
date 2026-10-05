@@ -1,0 +1,53 @@
+{
+  "name": "netscaler-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Citrix NetScaler / ADC over the NITRO REST API: read-only troubleshooting by default, write and forensic tools when their accounts are configured, local stdio or hosted HTTP",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RyanGallier/netscaler-mcp-oss.git"
+  },
+  "homepage": "https://github.com/RyanGallier/netscaler-mcp-oss#readme",
+  "bugs": {
+    "url": "https://github.com/RyanGallier/netscaler-mcp-oss/issues"
+  },
+  "author": "Ryan Gallier",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "netscaler",
+    "citrix-adc",
+    "nitro",
+    "claude"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "netscaler-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "ssh2": "^1.17.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "@types/ssh2": "^1.15.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.8.3"
+  }
+}

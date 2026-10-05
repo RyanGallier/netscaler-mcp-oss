@@ -1,0 +1,24 @@
+# deps / build
+node_modules/
+dist/
+
+# local config (contains secrets)
+.mcp.json
+.claude/settings.local.json
+.env
+.env.*
+
+# NITRO OpenAPI spec, downloaded locally for development (Citrix content, not redistributed)
+spec/
+*.tgz
+*.tar
+
+# logs
+*.log
+
+# personal Claude Code and PM files (this repo is public)
+CLAUDE.md
+.claude/
+tasks/
+documentation/
+
